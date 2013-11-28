@@ -37,6 +37,7 @@ function init() {
   videoImage = document.createElement( 'canvas' );
 	videoImage.width = dim[0];
 	videoImage.height = dim[1];
+	document.body.appendChild( videoImage );
 
 	videoImageContext = videoImage.getContext( '2d' );
 	// background color if no video present
@@ -84,9 +85,9 @@ function animate(){
 }
 
 
-var color_ratio = 2, threshold = 40;
+var color_ratio = 1.5, threshold = 40;
 function chromaKey() {
-  videoImageContext.drawImage(this.video, 0, 0);
+  videoImageContext.drawImage(this.video, 0, 0, dim[0], dim[1]);
   var frame = videoImageContext.getImageData(0, 0, dim[0], dim[1]);
   var l = frame.data.length / 4;
   
@@ -133,8 +134,8 @@ function fancy() {
 function render(){	
 	if (video.readyState === video.HAVE_ENOUGH_DATA ){
 		//videoImageContext.drawImage( video, 0, 0 );
-    //chromaKey();
-    fancy();
+    chromaKey();
+    //fancy();
 		if (videoTexture) videoTexture.needsUpdate = true;
 	}
   
