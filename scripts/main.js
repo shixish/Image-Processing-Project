@@ -62,7 +62,7 @@ function chromaKey() {
   //videoImageContext.clearRect(0,0,50,50);
 }
 
-var old_data = [], index = 0, buffer_length = 5, std_cutoff = 10, first = true;
+var old_data = [], index = 0, buffer_length = 5, std_cutoff = 40, first = true;
 function fancy() {
   var frame = videoImageContext.getImageData(0, 0, width, height);
   if (first) {
@@ -76,7 +76,7 @@ function fancy() {
 	
 	var l = frame.data.length / 4;
   for (var i = 0; i < l; i++) {
-		var pos = i*4, difference = 0, mean = 0;
+		var pos = i*4, mean = 0;
 		for (var j = 0; j < buffer_length; j++)
 			mean += (old_data[j][pos + 0] + old_data[j][pos + 1] + old_data[j][pos + 2])/3;
 		mean /= buffer_length;
@@ -90,11 +90,12 @@ function fancy() {
 		//console.log('std: ', std);
 		
     if (std < std_cutoff){
-      frame.data[pos + 0] = 255;
-      frame.data[pos + 1] = 255;
-      frame.data[pos + 2] = 255;
+      //frame.data[pos + 0] = 255;
+      //frame.data[pos + 1] = 255;
+      //frame.data[pos + 2] = 255;
       frame.data[pos + 3] = 0;
     }
+		//frame.data[pos + 3] = Math.exp(std);
   }
   //renderer.clear();
   videoImageContext.putImageData(frame, 0, 0);
@@ -103,10 +104,83 @@ function fancy() {
 	//console.log('index: ', index);
 }
 
-function render(){	
+//var bin_images = [], bin_counts = [], total_bins = 5, curr_bins = 0, frame_length = 0;
+//function subtraction() {
+//  var frame = videoImageContext.getImageData(0, 0, width, height);
+//  if (curr_bins < bins) {
+//		bin_images[curr_bins] = new Uint8ClampedArray(frame.data);
+//		curr_bins++;
+//		frame_length = frame.data.length / 4;
+//	}
+//  for (var i = 0; i < frame_length; i++) {
+//		var pos = i*4, best_bin = 0, r = pos, g = pos+1, b = pos+2;
+//		
+//		var min_idx = 0, min_val = -1;
+//		for (var j = 0; j < curr_bins; j++){
+//			var data = possible_backgrounds[j];
+//			var difference = Math.sqrt((Math.pow(frame.data[r]-data[r], 2) + Math.pow(frame.data[g]-data[g], 2) + Math.pow(frame.data[b]-data[b], 2))/3);
+//			if (difference < max_val || min_val == -1) {
+//				max_val = difference;
+//				min_idx = j;
+//			}
+//		}
+//		
+//		
+//		var std = 0;
+//		for (var j = 0; j < buffer_length; j++) {
+//			var color_avg = (old_data[j][pos + 0] + old_data[j][pos + 1] + old_data[j][pos + 2])/3;
+//			std += Math.pow(color_avg - mean, 2);
+//		}
+//		std = Math.sqrt(std);
+//		//console.log('std: ', std);
+//		
+//    if (std < std_cutoff){
+//      //frame.data[pos + 0] = 255;
+//      //frame.data[pos + 1] = 255;
+//      //frame.data[pos + 2] = 255;
+//      frame.data[pos + 3] = 0;
+//    }
+//		//frame.data[pos + 3] = Math.exp(std);
+//  }
+//  //renderer.clear();
+//  videoImageContext.putImageData(frame, 0, 0);
+//  //videoImageContext.clearRect(0,0,50,50);
+//	index = (index+1)%buffer_length;
+//	//console.log('index: ', index);
+//}
+
+
+var snapshot_data;
+function snapshot(){
+	drawImage();
+	var frame = videoImageContext.getImageData(0, 0, width, height);
+	snapshot_data = new Uint8ClampedArray(frame.data);
+}
+
+var first = true, difference_threshold = 20, frame_length=0;
+function subtraction() {
+  var frame = videoImageContext.getImageData(0, 0, width, height);
+  if (first) {
+		snapshot();
+		first = false;
+		frame_length = frame.data.length / 4;
+	}
+  for (var i = 0; i < frame_length; i++) {
+		var pos = i*4, r = pos, g = pos+1, b = pos+2;
+		
+		var difference = Math.sqrt((Math.pow(frame.data[r]-snapshot_data[r], 2) + Math.pow(frame.data[g]-snapshot_data[g], 2) + Math.pow(frame.data[b]-snapshot_data[b], 2))/3);
+		if (difference < difference_threshold) {
+			frame.data[pos + 3] = 0;
+		}
+  }
+  videoImageContext.putImageData(frame, 0, 0);
+}
+
+function render(){
 	if (video.readyState === video.HAVE_ENOUGH_DATA ){
 		drawImage();
     //chromaKey();
-    fancy();
+		subtraction();
+    //fancy();
 	}
 }
