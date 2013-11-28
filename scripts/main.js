@@ -62,7 +62,7 @@ function chromaKey() {
   //videoImageContext.clearRect(0,0,50,50);
 }
 
-var old_data = [], index = 0, buffer_length = 25, first = true;
+var old_data = [], index = 0, buffer_length = 5, std_cutoff = 10, first = true;
 function fancy() {
   var frame = videoImageContext.getImageData(0, 0, width, height);
   if (first) {
@@ -78,18 +78,18 @@ function fancy() {
   for (var i = 0; i < l; i++) {
 		var pos = i*4, difference = 0, mean = 0;
 		for (var j = 0; j < buffer_length; j++)
-			mean += old_data[j][pos + 0]; //(old_data[j][pos + 0] + old_data[j][pos + 1] + old_data[j][pos + 2])/3;
+			mean += (old_data[j][pos + 0] + old_data[j][pos + 1] + old_data[j][pos + 2])/3;
 		mean /= buffer_length;
 		
 		var std = 0;
 		for (var j = 0; j < buffer_length; j++) {
-			var color_avg = old_data[j][pos + 0]; //(old_data[j][pos + 0] + old_data[j][pos + 1] + old_data[j][pos + 2])/3;
+			var color_avg = (old_data[j][pos + 0] + old_data[j][pos + 1] + old_data[j][pos + 2])/3;
 			std += Math.pow(color_avg - mean, 2);
 		}
 		std = Math.sqrt(std);
 		//console.log('std: ', std);
 		
-    if (std < 20){
+    if (std < std_cutoff){
       frame.data[pos + 0] = 255;
       frame.data[pos + 1] = 255;
       frame.data[pos + 2] = 255;
