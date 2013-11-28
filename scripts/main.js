@@ -1,4 +1,4 @@
-var dim = [640, 480];//can also use video.offsetHeight/video.offsetWidth but the value seems to change once the video actually starts.
+var width = 640, height = 480;//can also use video.offsetHeight/video.offsetWidth but the value seems to change once the video actually starts.
 var video;
 
 // get user media
@@ -20,10 +20,11 @@ var videoImageContext;
 
 function init() {
   videoImage = document.createElement( 'canvas' );
-	videoImage.width = dim[0];
-	videoImage.height = dim[1];
+	videoImage.width = width;
+	videoImage.height = height;
 	document.body.appendChild( videoImage );
 	videoImageContext = videoImage.getContext( '2d' );
+	videoImageContext.scale(-1, 1);
   animate();
 }
 
@@ -34,9 +35,12 @@ function animate(){
 
 
 var color_ratio = 1.5, threshold = 40;
+var tx = width/2, ty = height/2, angleInRadians = Math.PI;
 function chromaKey() {
-  videoImageContext.drawImage(this.video, 0, 0, dim[0], dim[1]);
-  var frame = videoImageContext.getImageData(0, 0, dim[0], dim[1]);
+	//mirror the image using scale(-1, 1)
+	videoImageContext.drawImage(video, -width, 0, width, height);
+  //videoImageContext.drawImage(video, 0, 0, width, height); //original method
+  var frame = videoImageContext.getImageData(0, 0, width, height);
   var l = frame.data.length / 4;
   
   for (var i = 0; i < l; i++) {
@@ -59,7 +63,7 @@ function chromaKey() {
 
 function fancy() {
   videoImageContext.drawImage(this.video, 0, 0);
-  var frame = videoImageContext.getImageData(0, 0, dim[0], dim[1]);
+  var frame = videoImageContext.getImageData(0, 0, width, height);
   var l = frame.data.length / 4;
   
   for (var i = 0; i < l; i++) {
