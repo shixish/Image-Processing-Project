@@ -34,12 +34,14 @@ function animate(){
 }
 
 
-var color_ratio = 1.5, threshold = 40;
-var tx = width/2, ty = height/2, angleInRadians = Math.PI;
-function chromaKey() {
+function drawImage(){
 	//mirror the image using scale(-1, 1)
 	videoImageContext.drawImage(video, -width, 0, width, height);
   //videoImageContext.drawImage(video, 0, 0, width, height); //original method
+}
+
+var color_ratio = 1.5, threshold = 40;
+function chromaKey() {
   var frame = videoImageContext.getImageData(0, 0, width, height);
   var l = frame.data.length / 4;
   
@@ -60,18 +62,34 @@ function chromaKey() {
   //videoImageContext.clearRect(0,0,50,50);
 }
 
-
+var old_data = [], index = 0, buffer_length = 25, first = true;
 function fancy() {
-  videoImageContext.drawImage(this.video, 0, 0);
   var frame = videoImageContext.getImageData(0, 0, width, height);
-  var l = frame.data.length / 4;
-  
+  if (first) {
+		for(var i = 0; i < buffer_length; i++){
+			old_data[i] = new Uint8ClampedArray(frame.data);
+		}
+		first = false;
+	}else{
+		old_data[index] = new Uint8ClampedArray(frame.data);
+	}
+	
+	var l = frame.data.length / 4;
   for (var i = 0; i < l; i++) {
-    var pos = i*4;
-    var r = frame.data[pos + 0];
-    var g = frame.data[pos + 1];
-    var b = frame.data[pos + 2];
-    if ((b>r*color_ratio && b>g*color_ratio && b > threshold)){
+		var pos = i*4, difference = 0, mean = 0;
+		for (var j = 0; j < buffer_length; j++)
+			mean += old_data[j][pos + 0]; //(old_data[j][pos + 0] + old_data[j][pos + 1] + old_data[j][pos + 2])/3;
+		mean /= buffer_length;
+		
+		var std = 0;
+		for (var j = 0; j < buffer_length; j++) {
+			var color_avg = old_data[j][pos + 0]; //(old_data[j][pos + 0] + old_data[j][pos + 1] + old_data[j][pos + 2])/3;
+			std += Math.pow(color_avg - mean, 2);
+		}
+		std = Math.sqrt(std);
+		//console.log('std: ', std);
+		
+    if (std < 20){
       frame.data[pos + 0] = 255;
       frame.data[pos + 1] = 255;
       frame.data[pos + 2] = 255;
@@ -81,11 +99,14 @@ function fancy() {
   //renderer.clear();
   videoImageContext.putImageData(frame, 0, 0);
   //videoImageContext.clearRect(0,0,50,50);
+	index = (index+1)%buffer_length;
+	//console.log('index: ', index);
 }
 
 function render(){	
 	if (video.readyState === video.HAVE_ENOUGH_DATA ){
-    chromaKey();
-    //fancy();
+		drawImage();
+    //chromaKey();
+    fancy();
 	}
 }

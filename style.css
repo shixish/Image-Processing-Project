@@ -1,3 +1,8 @@
 body{
-  background: url('imgs/beach.jpg') no-repeat; 
+  background: url('imgs/beach.jpg') no-repeat center; 
+}
+
+canvas{
+  margin: auto;
+  display: block;
 }
