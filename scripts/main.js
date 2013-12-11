@@ -40,7 +40,7 @@ function drawImage(){
   //videoImageContext.drawImage(video, 0, 0, width, height); //original method
 }
 
-var color_ratio = 1.5, threshold = 40;
+var color_ratio = 2.5, threshold = 40;
 function chromaKey() {
   var frame = videoImageContext.getImageData(0, 0, width, height);
   var l = frame.data.length / 4;
@@ -50,7 +50,7 @@ function chromaKey() {
     var r = frame.data[pos + 0];
     var g = frame.data[pos + 1];
     var b = frame.data[pos + 2];
-    if ((b>r*color_ratio && b>g*color_ratio && b > threshold)){
+    if (b>r && b>g && (b>r*color_ratio || b>g*color_ratio) && b > threshold){
       frame.data[pos + 0] = 255;
       frame.data[pos + 1] = 255;
       frame.data[pos + 2] = 255;
@@ -179,8 +179,8 @@ function subtraction() {
 function render(){
 	if (video.readyState === video.HAVE_ENOUGH_DATA ){
 		drawImage();
-    //chromaKey();
-		subtraction();
+    chromaKey();
+		//subtraction();
     //fancy();
 	}
 }
